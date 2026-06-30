@@ -1,0 +1,67 @@
+services:
+   frontend:
+     image: haemzey/myfrontend:v1
+     ports:
+      - "8080:80"
+     networks:
+      - mynetwork
+     depends_on:
+       backend:
+         condition: service_started 
+     restart: always  
+     labels: 
+       maintainer: "Hamza"
+       project: "databridge-lite"
+       environment: "production"
+       description: "Frontend service of databridge-lite"
+
+   backend:
+      image: haemzey/mybackend:v1
+      ports:
+        - "3000:3000"
+      depends_on:
+        db:
+         condition: service_healthy
+      networks:
+      - mynetwork
+      restart: always
+      labels:
+        maintainer: "Hamza"
+        project: "databridge-lite"
+        environment: "production"
+        description: "Backend service of databridge-lite"
+      environment:
+        DB_HOST: localhost
+        DB_ENVIRONMENT: production
+        DB_PORT: 3306
+   db:
+     image: haemzey/mydb:v1
+     ports:
+       - "8000:3306"
+     networks:
+       - mynetwork
+     volumes:
+       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+       - myvolume:/var/lib/mysql 
+     labels:
+       maintainer: "Hamza"
+       project: "databridge-lite"
+       environment: "production"
+       description: "Database service of databridge-lite"
+     environment:
+       MYSQL_NAME: appdb
+       MYSQL_ROOT_PASSWORD: root
+       MYSQL_PORT: 3306
+     restart: always 
+     healthcheck:
+       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+       interval: 10s 
+       timeout: 5s
+       start_period: 30s
+       retries: 5 
+networks:
+   mynetwork:
+      driver: bridge
+volumes:
+   myvolume: {} 
+
